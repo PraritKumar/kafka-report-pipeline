@@ -1,0 +1,15 @@
+package io.github.praritkumar.kafka_report_pipeline;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+
+@Import(TestcontainersConfiguration.class)
+@SpringBootTest
+class KafkaReportPipelineApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
