@@ -15,6 +15,12 @@ public class ReportRequestListener {
 
     @KafkaListener(topics = KafkaTopicConfig.REPORT_REQUESTS_TOPIC)
     void onMessage(String message) {
-        processor.process(UUID.fromString(message));
+        UUID id;
+        try {
+            id = UUID.fromString(message);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidReportMessageException("Message is not a valid report id: " + message, ex);
+        }
+        processor.process(id);
     }
 }
