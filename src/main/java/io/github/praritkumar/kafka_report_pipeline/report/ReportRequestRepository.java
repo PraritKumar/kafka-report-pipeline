@@ -18,4 +18,16 @@ public interface ReportRequestRepository extends JpaRepository<ReportRequest, UU
                    @Param("from") ReportStatus from,
                    @Param("to") ReportStatus to,
                    @Param("now") Instant now);
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("update ReportRequest r set r.status = :to, r.filePath = :filePath, "
+            + "r.errorMessage = :error, r.updatedAt = :now "
+            + "where r.id = :id and r.status = :from")
+    int finish(@Param("id") UUID id,
+               @Param("from") ReportStatus from,
+               @Param("to") ReportStatus to,
+               @Param("filePath") String filePath,
+               @Param("error") String error,
+               @Param("now") Instant now);
 }

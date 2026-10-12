@@ -14,4 +14,11 @@ public class ApiExceptionHandler {
         problem.setTitle("Report not found");
         return problem;
     }
+
+    @ExceptionHandler(ReportNotReadyException.class)
+    ProblemDetail notReady(ReportNotReadyException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Report not ready");
+        return problem;
+    }
 }

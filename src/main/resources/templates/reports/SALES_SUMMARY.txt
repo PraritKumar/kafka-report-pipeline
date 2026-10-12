@@ -1,0 +1,6 @@
+SALES SUMMARY REPORT
+====================
+Request ID   : {{id}}
+Report type  : {{reportType}}
+Generated at : {{generatedAt}}
+Parameters   : {{parameters}}

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -12,9 +13,15 @@ public class ReportProcessor {
     private static final Logger log = LoggerFactory.getLogger(ReportProcessor.class);
 
     private final ReportRequestRepository repository;
+    private final TemplateRenderer renderer;
+    private final ReportFileStorage storage;
 
-    public ReportProcessor(ReportRequestRepository repository) {
+    public ReportProcessor(ReportRequestRepository repository,
+                           TemplateRenderer renderer,
+                           ReportFileStorage storage) {
         this.repository = repository;
+        this.renderer = renderer;
+        this.storage = storage;
     }
 
     public void process(UUID id) {
@@ -25,9 +32,30 @@ public class ReportProcessor {
         }
 
         log.info("Processing report request {}", id);
-        // Next step: generate the file from a template here.
+        try {
+            ReportRequest request = repository.findById(id)
+                    .orElseThrow(() -> new ReportNotFoundException(id));
 
-        repository.transition(id, ReportStatus.IN_PROGRESS, ReportStatus.COMPLETED, Instant.now());
-        log.info("Completed report request {}", id);
+            String content = renderer.render(request.getReportType(), Map.of(
+                    "id", id.toString(),
+                    "reportType", request.getReportType(),
+                    "generatedAt", Instant.now().toString(),
+                    "parameters", request.getParameters() == null ? "-" : request.getParameters()));
+
+            String fileName = storage.write(id, content);
+            repository.finish(id, ReportStatus.IN_PROGRESS, ReportStatus.COMPLETED, fileName, null, Instant.now());
+            log.info("Completed report request {} -> {}", id, fileName);
+        } catch (RuntimeException ex) {
+            log.error("Report request {} failed", id, ex);
+            repository.finish(id, ReportStatus.IN_PROGRESS, ReportStatus.FAILED, null,
+                    truncate(ex.getMessage()), Instant.now());
+        }
+    }
+
+    private static String truncate(String message) {
+        if (message == null) {
+            return "Report generation failed";
+        }
+        return message.length() <= 500 ? message : message.substring(0, 500);
     }
 }
